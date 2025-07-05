@@ -133,14 +133,13 @@ const searchProducts = async (query, limit = 10) => {
     
     let allProducts = [];
     
-    // STRATEGY 1: Search with full query (WooCommerce relevance)
+    // STRATEGY 1: Search with full query (Primary strategy)
     try {
       const response1 = await axios.get(WC_BASE_URL, {
         params: {
           search: query,
-          per_page: 60,
-          status: 'publish',
-          orderby: 'relevance'
+          per_page: Math.min(limit * 3, 30),
+          status: 'publish'
         },
         auth: {
           username: WC_KEY,
@@ -149,20 +148,27 @@ const searchProducts = async (query, limit = 10) => {
       });
       allProducts = [...allProducts, ...response1.data];
       console.log(`Strategy 1: Found ${response1.data.length} products with full query`);
+      
+      // If we have good results from primary search, use them
+      if (response1.data.length >= limit) {
+        console.log('Primary search successful, using those results');
+      }
     } catch (error) {
-      console.log('Strategy 1 failed:', error.message);
+      console.log('Strategy 1 failed:', error.response?.status, error.message);
     }
     
-    // STRATEGY 2: Search with combined keywords
-    if (keywords.length > 0) {
+    // STRATEGY 2: Only try keywords if primary search didn't yield enough results
+    if (allProducts.length < limit && keywords.length > 0) {
+      // Add small delay to avoid rate limiting
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
       try {
         const combinedKeywords = keywords.join(' ');
         const response2 = await axios.get(WC_BASE_URL, {
           params: {
             search: combinedKeywords,
-            per_page: 40,
-            status: 'publish',
-            orderby: 'relevance'
+            per_page: Math.min(limit * 2, 20),
+            status: 'publish'
           },
           auth: {
             username: WC_KEY,
@@ -172,30 +178,36 @@ const searchProducts = async (query, limit = 10) => {
         allProducts = [...allProducts, ...response2.data];
         console.log(`Strategy 2: Found ${response2.data.length} products with combined keywords`);
       } catch (error) {
-        console.log('Strategy 2 failed:', error.message);
+        console.log('Strategy 2 failed:', error.response?.status, error.message);
       }
     }
     
-    // STRATEGY 3: Search with individual keywords (top 3)
-    const topKeywords = keywords.slice(0, 3);
-    for (const keyword of topKeywords) {
-      try {
-        const response3 = await axios.get(WC_BASE_URL, {
-          params: {
-            search: keyword,
-            per_page: 25,
-            status: 'publish',
-            orderby: 'relevance'
-          },
-          auth: {
-            username: WC_KEY,
-            password: WC_SECRET
-          }
-        });
-        allProducts = [...allProducts, ...response3.data];
-        console.log(`Strategy 3: Found ${response3.data.length} products for keyword "${keyword}"`);
-      } catch (error) {
-        console.log(`Strategy 3 failed for "${keyword}":`, error.message);
+    // STRATEGY 3: Try individual keywords only if still not enough results
+    if (allProducts.length < limit && keywords.length > 0) {
+      const topKeywords = keywords.slice(0, 2); // Reduced to 2 keywords
+      for (const keyword of topKeywords) {
+        if (allProducts.length >= limit) break; // Stop if we have enough
+        
+        // Add delay between requests
+        await new Promise(resolve => setTimeout(resolve, 150));
+        
+        try {
+          const response3 = await axios.get(WC_BASE_URL, {
+            params: {
+              search: keyword,
+              per_page: 15,
+              status: 'publish'
+            },
+            auth: {
+              username: WC_KEY,
+              password: WC_SECRET
+            }
+          });
+          allProducts = [...allProducts, ...response3.data];
+          console.log(`Strategy 3: Found ${response3.data.length} products for keyword "${keyword}"`);
+        } catch (error) {
+          console.log(`Strategy 3 failed for "${keyword}":`, error.response?.status, error.message);
+        }
       }
     }
     
