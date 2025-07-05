@@ -1,0 +1,486 @@
+<!-- Enhanced AssistiveBot for WordPress Footer -->
+<!-- AssistiveBot Styles -->
+<style>
+#chatbot-container {
+  position: fixed;
+  bottom: 100px;
+  right: 20px;
+  width: 350px;
+  max-height: 500px;
+  background-color: #fff;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  display: none;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  z-index: 9999;
+  border: 1px solid #e1e5e9;
+}
+
+#chatbot-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 16px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+  border-radius: 16px 16px 0 0;
+  font-size: 16px;
+}
+
+#chatbot-messages {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+  font-size: 14px;
+  max-height: 320px;
+  background: #fafbfc;
+}
+
+.message {
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease-in;
+}
+
+.user-message {
+  text-align: right;
+}
+
+.user-message .message-bubble {
+  background: #667eea;
+  color: white;
+  padding: 12px 16px;
+  border-radius: 18px 18px 4px 18px;
+  display: inline-block;
+  max-width: 80%;
+  word-wrap: break-word;
+}
+
+.bot-message .message-bubble {
+  background: white;
+  color: #333;
+  padding: 12px 16px;
+  border-radius: 18px 18px 18px 4px;
+  display: inline-block;
+  max-width: 85%;
+  word-wrap: break-word;
+  border: 1px solid #e1e5e9;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.product-card {
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 12px;
+  padding: 12px;
+  margin: 8px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  transition: transform 0.2s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+
+.product-name {
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 6px;
+  font-size: 15px;
+}
+
+.product-price {
+  color: #e74c3c;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+.product-description {
+  color: #666;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 8px;
+}
+
+.product-link {
+  background: #667eea;
+  color: white !important;
+  text-decoration: none;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+  display: inline-block;
+  transition: background 0.2s ease;
+}
+
+.product-link:hover {
+  background: #5a6fd8;
+  text-decoration: none;
+}
+
+.suggestions {
+  margin-top: 12px;
+}
+
+.suggestion-chip {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 16px;
+  padding: 6px 12px;
+  margin: 4px 4px 4px 0;
+  display: inline-block;
+  font-size: 12px;
+  color: #6c757d;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.suggestion-chip:hover {
+  background: #667eea;
+  color: white;
+  border-color: #667eea;
+}
+
+#chatbot-input-area {
+  display: flex;
+  border-top: 1px solid #e1e5e9;
+  background: white;
+  border-radius: 0 0 16px 16px;
+}
+
+#chatbot-input {
+  flex: 1;
+  border: none;
+  padding: 16px;
+  font-size: 14px;
+  outline: none;
+  border-radius: 0 0 0 16px;
+}
+
+#chatbot-send {
+  background: #667eea;
+  color: white;
+  border: none;
+  padding: 16px 20px;
+  cursor: pointer;
+  font-weight: 500;
+  border-radius: 0 0 16px 0;
+  transition: background 0.2s ease;
+}
+
+#chatbot-send:hover {
+  background: #5a6fd8;
+}
+
+#chatbot-send:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+#chatbot-toggle {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 64px;
+  height: 64px;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 10000;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+  transition: transform 0.2s ease;
+}
+
+#chatbot-toggle:hover {
+  transform: scale(1.05);
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+}
+
+.typing-dots {
+  display: flex;
+  gap: 4px;
+}
+
+.typing-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #667eea;
+  animation: typing 1.4s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(1) { animation-delay: -0.32s; }
+.typing-dot:nth-child(2) { animation-delay: -0.16s; }
+
+@keyframes typing {
+  0%, 80%, 100% { transform: scale(0.8); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 480px) {
+  #chatbot-container {
+    width: calc(100vw - 40px);
+    right: 20px;
+    left: 20px;
+    bottom: 90px;
+  }
+}
+</style>
+
+<!-- AssistiveBot HTML -->
+<div id="chatbot-container">
+  <div id="chatbot-header">🤖 Product Assistant (click to close)</div>
+  <div id="chatbot-messages">
+    <div class="message bot-message">
+      <div class="message-bubble">
+        👋 Hi! I'm your product assistant. I can help you find the perfect products from our store. Try asking me something like "show me wheelchairs" or "I need a hearing aid"!
+      </div>
+    </div>
+  </div>
+  <div id="chatbot-input-area">
+    <input type="text" id="chatbot-input" placeholder="Ask me about any product..." />
+    <button id="chatbot-send">Send</button>
+  </div>
+</div>
+<button id="chatbot-toggle">💬</button>
+
+<!-- Enhanced AssistiveBot Script -->
+<script>
+const chatbotToggle = document.getElementById("chatbot-toggle");
+const chatbotContainer = document.getElementById("chatbot-container");
+const chatbotSend = document.getElementById("chatbot-send");
+const chatbotInput = document.getElementById("chatbot-input");
+const chatbotMessages = document.getElementById("chatbot-messages");
+const chatbotHeader = document.getElementById("chatbot-header");
+
+// API Configuration
+const API_BASE_URL = "https://woo-product-proxy.onrender.com";
+
+// Toggle bot on/off
+chatbotToggle.onclick = () => {
+  chatbotContainer.style.display = "flex";
+  chatbotContainer.style.flexDirection = "column";
+  chatbotToggle.style.display = "none";
+  chatbotInput.focus();
+};
+
+// Close bot by clicking header
+chatbotHeader.onclick = () => {
+  chatbotContainer.style.display = "none";
+  chatbotToggle.style.display = "block";
+};
+
+// Escape HTML for security
+function escapeHTML(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+// Add user message
+function addUserMessage(message) {
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "message user-message";
+  messageDiv.innerHTML = `<div class="message-bubble">${escapeHTML(message)}</div>`;
+  chatbotMessages.appendChild(messageDiv);
+  scrollToBottom();
+}
+
+// Add bot message with products
+function addBotMessage(response, products = [], suggestions = []) {
+  const messageDiv = document.createElement("div");
+  messageDiv.className = "message bot-message";
+  
+  let content = `<div class="message-bubble">${escapeHTML(response)}</div>`;
+  
+  // Add products if any
+  if (products && products.length > 0) {
+    products.forEach(product => {
+      content += `
+        <div class="product-card">
+          <div class="product-name">${escapeHTML(product.name)}</div>
+          ${product.price ? `<div class="product-price">${escapeHTML(product.price)}</div>` : ''}
+          ${product.description ? `<div class="product-description">${escapeHTML(product.description)}</div>` : ''}
+          <a href="${product.link}" target="_blank" class="product-link">View Product →</a>
+        </div>
+      `;
+    });
+  }
+  
+  // Add suggestions if any
+  if (suggestions && suggestions.length > 0) {
+    content += '<div class="suggestions">';
+    suggestions.forEach(suggestion => {
+      content += `<span class="suggestion-chip" onclick="handleSuggestionClick('${escapeHTML(suggestion)}')">${escapeHTML(suggestion)}</span>`;
+    });
+    content += '</div>';
+  }
+  
+  messageDiv.innerHTML = content;
+  chatbotMessages.appendChild(messageDiv);
+  scrollToBottom();
+}
+
+// Add typing indicator
+function addTypingIndicator() {
+  const typingDiv = document.createElement("div");
+  typingDiv.className = "message bot-message typing-indicator";
+  typingDiv.id = "typing-indicator";
+  typingDiv.innerHTML = `
+    <div class="message-bubble">
+      <div class="typing-dots">
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+        <div class="typing-dot"></div>
+      </div>
+    </div>
+  `;
+  chatbotMessages.appendChild(typingDiv);
+  scrollToBottom();
+}
+
+// Remove typing indicator
+function removeTypingIndicator() {
+  const typingIndicator = document.getElementById("typing-indicator");
+  if (typingIndicator) {
+    typingIndicator.remove();
+  }
+}
+
+// Scroll to bottom
+function scrollToBottom() {
+  chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+}
+
+// Handle suggestion clicks
+function handleSuggestionClick(suggestion) {
+  chatbotInput.value = suggestion;
+  sendMessage();
+}
+
+// Enhanced API call to intelligent assistant
+async function getBotReply(userInput) {
+  try {
+    // Use the new enhanced search API
+    const response = await fetch(`${API_BASE_URL}/api/search?q=${encodeURIComponent(userInput)}&limit=4`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    
+    return {
+      message: data.assistant?.message || "I found some products for you!",
+      products: data.products || [],
+      suggestions: data.assistant?.suggestions || []
+    };
+  } catch (error) {
+    console.error("API Error:", error);
+    
+    // Fallback to legacy API
+    try {
+      const fallbackResponse = await fetch(`${API_BASE_URL}/api/products?q=${encodeURIComponent(userInput)}`);
+      const fallbackData = await fallbackResponse.json();
+      
+      if (fallbackData.length > 0) {
+        return {
+          message: `I found ${fallbackData.length} product${fallbackData.length > 1 ? 's' : ''} for you!`,
+          products: fallbackData.slice(0, 3).map(p => ({
+            name: p.name,
+            link: p.permalink,
+            description: p.description,
+            price: null
+          })),
+          suggestions: ["Show me more", "Different category", "Help me choose"]
+        };
+      }
+    } catch (fallbackError) {
+      console.error("Fallback API Error:", fallbackError);
+    }
+    
+    return {
+      message: "I'm having trouble connecting to our product database right now. Please try again in a moment, or contact our support team if the issue persists.",
+      products: [],
+      suggestions: ["Try again", "Contact support", "Browse categories"]
+    };
+  }
+}
+
+// Send message handler
+async function sendMessage() {
+  const userInput = chatbotInput.value.trim();
+  if (!userInput) return;
+  
+  // Disable send button and input
+  chatbotSend.disabled = true;
+  chatbotInput.disabled = true;
+  
+  // Add user message
+  addUserMessage(userInput);
+  chatbotInput.value = "";
+  
+  // Show typing indicator
+  addTypingIndicator();
+  
+  try {
+    // Get bot reply
+    const reply = await getBotReply(userInput);
+    
+    // Remove typing indicator
+    removeTypingIndicator();
+    
+    // Add bot response
+    addBotMessage(reply.message, reply.products, reply.suggestions);
+    
+  } catch (error) {
+    removeTypingIndicator();
+    addBotMessage("Sorry, I encountered an error. Please try again!");
+  } finally {
+    // Re-enable send button and input
+    chatbotSend.disabled = false;
+    chatbotInput.disabled = false;
+    chatbotInput.focus();
+  }
+}
+
+// Event listeners
+chatbotSend.onclick = sendMessage;
+
+chatbotInput.addEventListener("keypress", function (e) {
+  if (e.key === "Enter" && !chatbotSend.disabled) {
+    sendMessage();
+  }
+});
+
+// Auto-focus input when chatbot opens
+const originalToggleClick = chatbotToggle.onclick;
+chatbotToggle.onclick = () => {
+  originalToggleClick();
+  setTimeout(() => chatbotInput.focus(), 100);
+};
+
+// Prevent form submission if chatbot is inside a form
+chatbotInput.addEventListener("keydown", function(e) {
+  if (e.key === "Enter") {
+    e.preventDefault();
+  }
+});
+
+console.log("🤖 Enhanced Product Assistant loaded successfully!");
+</script>
