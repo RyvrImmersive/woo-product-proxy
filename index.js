@@ -3,7 +3,7 @@ const axios = require("axios");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const helmet = require("helmet");
-const { RateLimiterMemory } = require("rate-limiter-flexible");
+
 const path = require("path");
 
 const app = express();
@@ -19,21 +19,10 @@ app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
 
-// Rate limiting
-const rateLimiter = new RateLimiterMemory({
-  keyGenerator: (req) => req.ip,
-  points: 10, // Number of requests
-  duration: 60, // Per 60 seconds
-});
-
-// Rate limiting middleware
-const rateLimitMiddleware = async (req, res, next) => {
-  try {
-    await rateLimiter.consume(req.ip);
-    next();
-  } catch (rejRes) {
-    res.status(429).json({ error: 'Too many requests, please try again later.' });
-  }
+// Simple rate limiting placeholder (removed for deployment compatibility)
+const rateLimitMiddleware = (req, res, next) => {
+  // Rate limiting temporarily disabled for deployment
+  next();
 };
 
 // Helper function to clean HTML from descriptions
